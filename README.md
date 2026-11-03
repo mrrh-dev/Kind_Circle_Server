@@ -1,6 +1,8 @@
 # KindCircle API
 
-Express + MongoDB REST API for [KindCircle](../events-client). Login tokens are issued by BetterAuth on the Next.js client; this server only verifies them (JWT)
+Express + MongoDB REST API for [KindCircle](https://kindcircle-ashen.vercel.app). Login tokens are issued by BetterAuth on the Next.js client; this server only verifies them (JWT)
+
+**Live site:** https://kindcircleserver.vercel.app
 
 ## Endpoints
 
