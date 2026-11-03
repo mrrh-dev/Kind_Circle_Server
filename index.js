@@ -29,16 +29,6 @@ const db = client.db(process.env.DB_NAME || 'kindcircle');
 const eventsCollection = db.collection('events');
 const joinsCollection = db.collection('joins');
 
-// doing indexing for fast search
-await eventsCollection.createIndex({ eventDate: 1 });
-await eventsCollection.createIndex({ createdBy: 1 });
-await joinsCollection.createIndex({ userEmail: 1 });
-// one person can join an event only once
-await joinsCollection.createIndex(
-  { eventId: 1, userEmail: 1 },
-  { unique: true },
-);
-
 // --- routes ---
 app.get('/', (req, res) => {
   res.send({ name: 'KindCircle API', status: 'running' });
