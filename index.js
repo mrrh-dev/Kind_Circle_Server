@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { MongoClient } from 'mongodb';
+import eventsRouter from './routes/events.js';
+import joinsRouter from './routes/joins.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -65,3 +67,5 @@ app.use((error, req, res, next) => {
 app.listen(port, () => {
   console.log(`server is running on port ${port}`);
 });
+
+export default app;
