@@ -13,7 +13,6 @@ export default function eventsRouter(eventsCollection, joinsCollection) {
   const router = Router();
 
   // Takes a list of events and adds "participantCount" (how many people joined)
-  // to each one. It also turns the _id into a plain string.
   async function addParticipantCounts(events) {
     if (events.length === 0) return [];
 
@@ -43,7 +42,6 @@ export default function eventsRouter(eventsCollection, joinsCollection) {
   router.get('/', async (req, res, next) => {
     try {
       const { type, search } = req.query;
-      // limit is between 0 and 60 (0 means "no limit")
       const limit = Math.min(
         Math.max(parseInt(req.query.limit, 10) || 0, 0),
         60,
@@ -54,7 +52,6 @@ export default function eventsRouter(eventsCollection, joinsCollection) {
         filter.eventType = type;
       }
       if (typeof search === 'string' && search.trim()) {
-        // "i" means ignore upper/lower case
         const pattern = new RegExp(
           escapeRegex(search.trim().slice(0, 60)),
           'i',
@@ -75,7 +72,7 @@ export default function eventsRouter(eventsCollection, joinsCollection) {
   });
 
   // GET /events/mine  (private)
-  // IMPORTANT: keep this above "/:id", otherwise Express reads "mine" as an id.
+  // Note: keep this above "/:id", otherwise express reads "mine" as an id.
   router.get('/mine', verifyToken, async (req, res, next) => {
     try {
       const events = await eventsCollection
@@ -170,7 +167,6 @@ export default function eventsRouter(eventsCollection, joinsCollection) {
   });
 
   // DELETE /events/:id  (private) - only the creator can delete.
-  // The join records of that event are removed too.
   router.delete('/:id', verifyToken, async (req, res, next) => {
     try {
       const id = req.params.id;
