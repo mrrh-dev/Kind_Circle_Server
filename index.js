@@ -1,67 +1,57 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import eventsRouter from './routes/events.js';
 import joinsRouter from './routes/joins.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-// --- middleware ---
 app.use(cors());
 app.use(express.json());
 
-// ---- database ----
+// ---database---
 if (!process.env.MONGODB_URI) {
-  console.log('MONGODB_URI is missing. Add it to your .env file.');
-  process.exit(1);
+  throw new Error('MONGODB_URI is missing. Add it to your .env file.');
 }
 
 const client = new MongoClient(process.env.MONGODB_URI);
-try {
-  await client.connect();
-  console.log('You successfully connected to MongoDB!');
-} catch (err) {
-  console.log('Could not connect to MongoDB:', err.message);
-  process.exit(1);
-}
+await client.connect();
+console.log('You successfully connected to MongoDB!');
 
 const db = client.db(process.env.DB_NAME || 'kindcircle');
 const eventsCollection = db.collection('events');
 const joinsCollection = db.collection('joins');
 
-// Indexing for fast search
-await eventsCollection.createIndex({ eventDate: 1 });
-await eventsCollection.createIndex({ createdBy: 1 });
-await joinsCollection.createIndex({ userEmail: 1 });
-// one person can join an event only once
+// One person can join an event only once
 await joinsCollection.createIndex(
   { eventId: 1, userEmail: 1 },
   { unique: true },
 );
 
-// --- routes ---
+// Finds one event by the id from the URL. Returns null if the id is wrong or not found.
+async function findEventById(id) {
+  if (!ObjectId.isValid(id)) return null;
+  return eventsCollection.findOne({ _id: new ObjectId(id) });
+}
+
+// ---routes---
 app.get('/', (req, res) => {
-  res.send({ name: 'KindCircle API', status: 'running' });
+  res.send({ message: 'KindCircle API is running' });
 });
 
-// The route files need the collections, so pass them in here
-app.use('/events', eventsRouter(eventsCollection, joinsCollection));
-app.use('/', joinsRouter(eventsCollection, joinsCollection));
+// The route files get the database tools from here
+app.use(
+  '/events',
+  eventsRouter(eventsCollection, joinsCollection, findEventById),
+);
+app.use('/', joinsRouter(eventsCollection, joinsCollection, findEventById));
 
-// --- errors ---
-// If no route matched, send 404
-app.use((req, res) => {
-  res.status(404).send({ message: 'That route does not exist.' });
-});
-
-// Catches any error thrown in a route.
+// If any route throws an error, it ends up here
 app.use((error, req, res, next) => {
   console.log(error);
-  res
-    .status(500)
-    .send({ message: 'Something went wrong on our side. Please try again.' });
+  res.status(500).send({ message: 'Something went wrong. Please try again.' });
 });
 
 app.listen(port, () => {
