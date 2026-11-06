@@ -59,30 +59,24 @@ export default function joinsRouter(
   });
 
   // GET /joined (private) - events the logged-in user joined, earliest first
+
   router.get('/joined', verifyToken, async (req, res) => {
-    const rows = await joinsCollection
-      .aggregate([
-        { $match: { userEmail: req.user.email } },
-        {
-          $lookup: {
-            from: 'events',
-            localField: 'eventId',
-            foreignField: '_id',
-            as: 'event',
-          },
-        },
-        { $unwind: '$event' },
-        { $sort: { 'event.eventDate': 1 } },
-      ])
+    const joins = await joinsCollection
+      .find({ userEmail: req.user.email })
       .toArray();
 
-    res.send(
-      rows.map((row) => ({
-        joinId: row._id,
-        joinedAt: row.joinedAt,
-        event: row.event,
-      })),
-    );
+    const eventIds = joins.map((join) => join.eventId);
+    const events = await eventsCollection
+      .find({ _id: { $in: eventIds } })
+      .sort({ eventDate: 1 })
+      .toArray();
+
+    const joinedEvents = events.map((event) => {
+      const join = joins.find((item) => item.eventId.equals(event._id));
+      return { joinId: join._id, joinedAt: join.joinedAt, event };
+    });
+
+    res.send(joinedEvents);
   });
 
   return router;
