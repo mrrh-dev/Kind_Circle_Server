@@ -67,7 +67,6 @@ export default function eventsRouter(
       ];
     }
 
-    // limit(0) means "no limit"
     const limit = parseInt(req.query.limit) || 0;
     const events = await eventsCollection
       .find(filter)
@@ -78,7 +77,6 @@ export default function eventsRouter(
   });
 
   // GET /events/mine (private) - events created by the logged-in user
-  // Keep this above "/:id", otherwise express reads "mine" as an id
   router.get('/mine', verifyToken, async (req, res) => {
     const events = await eventsCollection
       .find({ createdBy: req.user.email })
